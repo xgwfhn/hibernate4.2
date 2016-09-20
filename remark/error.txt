@@ -1,0 +1,2 @@
+*
+-Dmaven.multiModuleProjectDirectory system propery is not set. Check $M2_HOME environment variable and mvn script match.

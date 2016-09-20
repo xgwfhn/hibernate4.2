@@ -1,3 +1,4 @@
-* 先创建俩个项目  hibernate-parent和 hibernate-parent   项目存放目录为同级,然后把hibernate_cache_level_1 
+* 
+ 先创建俩个项目  hibernate-parent和 hibernate-parent   项目存放目录为同级,然后把hibernate_cache_level_1 
   项目拷贝到 hibernate-parent中,在elipse工作空间里  将原有项目删除，再重新把从 hibernate-parent中的 hibernate-parent导入，
   这样提交 hibernate-parent时  会自动关联 hibernate_cache_level_1 
