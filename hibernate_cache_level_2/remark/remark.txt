@@ -1,0 +1,43 @@
+
+20.2. The Second Level Cache
+
+A Hibernate Session is a transaction-level cache of persistent data. 
+It is possible to configure a cluster or JVM-level (SessionFactory-level) cache on a class-by-class and collection-by-collection basis. 
+You can even plug in a clustered cache. Be aware that caches are not aware of changes made to the persistent store by another application. 
+They can, however, be configured to regularly expire cached data.
+
+You have the option to tell Hibernate which caching implementation to use by specifying the name of a class that implements org.hibernate.cache.spi.CacheProvider using the property hibernate.cache.provider_class. 
+Hibernate is bundled with a number of built-in integrations with the open-source cache providers that are listed in Table 20.1, “Cache Providers”.
+You can also implement your own and plug it in as outlined above. 
+Note that versions prior to Hibernate 3.2 use EhCache as the default cache provider.
+ 
+
+20.2.1. Cache mappings
+
+As we have done in previous chapters we are looking at the two different possibiltites to configure caching. 
+First configuration via annotations and then via Hibernate mapping files.
+
+By default, entities are not part of the second level cache and we recommend you to stick to this setting. 
+However, you can override this by setting the shared-cache-mode element in your persistence.xml file or by using the javax.persistence.sharedCache.
+mode property in your configuration.The following values are possible:
+
+ENABLE_SELECTIVE (Default and recommended value): entities are not cached unless explicitly marked as cacheable.
+DISABLE_SELECTIVE: entities are cached unless explicitly marked as not cacheable.
+ALL: all entities are always cached even if marked as non cacheable.
+NONE: no entity are cached even if marked as cacheable. This option can make sense to disable second-level cache altogether.
+The cache concurrency strategy used by default can be set globaly via the hibernate.cache.default_cache_concurrency_strategy configuration property. The values for this property are:
+
+read-only
+read-write
+nonstrict-read-write
+transactional
+
+Note
+It is recommended to define the cache concurrency strategy per entity rather than using a global one. 
+Use the @org.hibernate.annotations.Cache annotation for that.
+
+
+二级缓存  是事务级别缓存 ,可配置为sessionFacotry级别缓存或集群，可针对实体或集合 缓存
+参考 http://www.vzhang.net/thread-81-1-1.html
+
+http://www.tuicool.com/articles/Azqea26

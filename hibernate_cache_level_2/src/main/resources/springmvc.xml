@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	 xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:tx="http://www.springframework.org/schema/tx"  
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xmlns:cache="http://www.springframework.org/schema/cache" 
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+	    http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context
+		http://www.springframework.org/schema/context/spring-context-4.0.xsd
+		http://www.springframework.org/schema/tx
+		http://www.springframework.org/schema/tx/spring-tx-4.0.xsd
+		http://www.springframework.org/schema/mvc
+		http://www.springframework.org/schema/mvc/spring-mvc-4.0.xsd
+		http://www.springframework.org/schema/cache
+        http://www.springframework.org/schema/cache/spring-cache-3.2.xsd">
+    
+	
+
+	
+     <!-- 
+	配置信息可以参考 hibernate-release-5.2.2.Final\hibernate-release-5.2.2.Final\project\etc\hibernate.properties,但是key对应的value时
+	有时没有更新,需要拷贝jar包的class的最新名称来替换  如c3p0配置文件 hibernate.properties给出的 hibernate.connection.provider_class 对应的是
+	org.hibernate.connection.C3P0ConnectionProvider，但是hibernate5.2.2这个版本中并没有这个类,而是
+	org.hibernate.c3p0.internal.C3P0ConnectionProvider
+ -->	
+	
+    <!-- springmvc和hibernate整合 ,为什么要整合
+    	 1,使用springmvc创建sessionFactory(单实例),通过它管理session
+    	 2,整合后使用 声明式 管理事务
+    	   整合配置信息   参考 springmvc官方文档 ，搜LocalSessionFactoryBean即可
+    -->
+     <!-- 配置自定扫描的包  扫描dao包  将带有@Repository的类纳入spring ioc管理 并实例化 -->
+	<context:component-scan base-package="hibernate.hibernate_cache_level_2">
+		<context:include-filter type="regex" expression=".dao.*"/>
+		<context:include-filter type="regex" expression=".service.*"/>
+		<context:include-filter type="regex" expression=".entity.*"/>
+		<context:include-filter type="regex" expression=".utils.*"/>
+	</context:component-scan>
+    <context:property-placeholder location="classpath:jdbc.properties"/> <!-- 导入数据库连接配置 -->
+     <!-- c3p0数据源   此处ComboPooledDataSource数据源来源于c3p0-0.9.2.1.jar-->   
+    <bean  id="dataSource"  class="com.mchange.v2.c3p0.ComboPooledDataSource"   
+            destroy-method="close">  
+        <property name="driverClass" value="${driverClass}" />
+        <property name="jdbcUrl" value="${jdbcUrl}" />
+        <property name="user" value="${user}" />
+        <property name="password" value="${password}" />
+        <property name="initialPoolSize" value="1" />  
+        <property name="minPoolSize" value="0" />  
+        <property name="maxPoolSize" value="10" />  
+        <property name="acquireIncrement" value="5" />  
+        <property name="maxIdleTime" value="10" />  
+        <property name="maxStatements" value="0" />
+    </bean>
+    
+   <bean id="sessionFactory" class="org.springframework.orm.hibernate4.LocalSessionFactoryBean">
+		<property name="dataSource" ref="dataSource" />
+		<property name="configLocation" value="classpath:hibernate.cfg.xml" />
+	</bean>	
+  
+      
+    <bean id="cacheManagerFactory" class="org.springframework.cache.ehcache.EhCacheManagerFactoryBean">  
+        <property name="configLocation" value="classpath:ehcache.xml" />  
+    </bean>  
+      
+    <bean id="cacheManager" class="org.springframework.cache.ehcache.EhCacheCacheManager">      
+        <property name="cacheManager"  ref="cacheManagerFactory"/>      
+    </bean>  
+    <cache:annotation-driven cache-manager="cacheManager"/>  
+    
+    <!-- JPA实体管理工厂的配置   标记@Repository,@Service等 的类 需要entityManagerFactory 来创建,所以必须先让springmvc把该实例创建出来 纳入ioc管理-->  
+    <bean id="entityManagerFactory" class="org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean">
+       <property name="jpaVendorAdapter">
+       	 <bean  class="org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter">
+	        <property name="showSql" value="true"/>
+	        <property name="generateDdl" value="false"/>
+	        <property name="database" value="MYSQL"/>
+	    </bean>
+       </property>
+       <property name="dataSource" ref="dataSource" />
+       <property name="jpaProperties">  
+           <props>
+              <prop key="hibernate.cache.use_query_cache">true</prop>
+           	  <!-- 集成ehcache 配置 -->    
+           	   <prop key="hibernate.cache.use_second_level_cache">true</prop>
+           	   <prop key="hibernate.cache.region.factory_class">org.hibernate.cache.ehcache.EhCacheRegionFactory</prop>  
+               <prop key="hibernate.generate_statistics">true</prop>
+               <!-- 集成ehcache 配置 -->    
+               <prop key="hibernate.ejb.naming_strategy">org.hibernate.cfg.ImprovedNamingStrategy</prop>  
+               <prop key="hibernate.show_sql">true</prop>  
+               <prop key="hibernate.hbm2ddl.auto">update</prop>  
+           </props>  
+       </property>          
+   </bean>
+       <!-- Jpa 事务配置 -->  
+    <bean id="transactionManager" class="org.springframework.orm.jpa.JpaTransactionManager">  
+        <property name="entityManagerFactory" ref="entityManagerFactory"/>  
+    </bean>  
+    
+    <!-- 使用annotation定义事务 -->  
+    <tx:annotation-driven transaction-manager="transactionManager" proxy-target-class="true" />   	
+</beans>
+<!-- 参考  http://www.cnblogs.com/leiOOlei/p/3727859.html -->
+<!-- 
+hibernate jpa 事务配置参考
+http://www.mamicode.com/info-detail-110033.html
+spring jpa  ehcache 配置
+http://www.iteye.com/problems/7842
+springmvc+spring+spring data jpa + ehcache环境搭建
+http://090508tanjie.iteye.com/blog/2308477
+Ehcache整合spring配置
+http://blog.csdn.net/clj198606061111/article/details/41121437
+@Cacheable设置
+http://elim.iteye.com/blog/2123030
+ -->

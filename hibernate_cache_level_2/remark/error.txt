@@ -1,0 +1,7 @@
+Caused by: java.lang.ClassNotFoundException: org.hibernate.engine.FilterDefinition
+
+原先：<bean id="sessionFactory"
+class="org.springframework.orm.hibernate3.annotation.AnnotationSessionFactoryBean">
+
+改成：<bean id="sessionFactory"
+class="org.springframework.orm.hibernate4.LocalSessionFactoryBean">
