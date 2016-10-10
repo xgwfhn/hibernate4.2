@@ -24,5 +24,6 @@
   </dependencies>
   <modules>
   	<module>hibernate_cache_level_1</module>
+  	<module>hibernate_cache_level_2</module>
   </modules>
 </project>
